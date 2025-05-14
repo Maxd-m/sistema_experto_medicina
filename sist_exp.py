@@ -17,6 +17,7 @@ class DiagnosticoMedico(KnowledgeEngine):
     def __init__(self):
         super().__init__()
         self.diagnostico_realizado = False  # Flag para evitar diagnóstico desconocido si ya hay uno válido
+        self.evaluacion_final = False  # Nuevo atributo
 
     @Rule(Sintomas(fiebre=True, tos=True, dolor_garganta=True, congestion_nasal=True), salience=5)
     def diagnostico_gripe(self):
@@ -43,41 +44,56 @@ class DiagnosticoMedico(KnowledgeEngine):
         print("🧠 Diagnóstico: Posible MIGRAÑA. Evite la luz fuerte y descanse.")
         self.diagnostico_realizado = True
 
+    # @Rule(AS.fact << Sintomas(), salience=1)
+    # def diagnostico_desconocido(self, fact):
+    #     if not self.diagnostico_realizado:  # Solo se muestra si no hubo diagnóstico
+    #         print("❓ No se encontró un diagnóstico claro. Consulte con un médico para más información.")
+    #         print(f"📌 Hechos insertados en el motor: {fact}")
     @Rule(AS.fact << Sintomas(), salience=1)
     def diagnostico_desconocido(self, fact):
-        if not self.diagnostico_realizado:  # Solo se muestra si no hubo diagnóstico
+        if not self.diagnostico_realizado and self.evaluacion_final:
             print("❓ No se encontró un diagnóstico claro. Consulte con un médico para más información.")
             print(f"📌 Hechos insertados en el motor: {fact}")
 
 # 🏥 FUNCION PRINCIPAL
+
 def ejecutar_diagnostico():
     motor = DiagnosticoMedico()
+    sintomas_usuario = {}
+
+    lista_sintomas = [
+        ("fiebre", "¿Tienes fiebre? (si/no): "),
+        ("tos", "¿Tienes tos? (si/no): "),
+        ("dolor_garganta", "¿Te duele la garganta? (si/no): "),
+        ("congestion_nasal", "¿Tienes congestión nasal? (si/no): "),
+        ("dificultad_respirar", "¿Tienes dificultad para respirar? (si/no): "),
+        ("perdida_olfato", "¿Perdiste el olfato? (si/no): "),
+        ("dolor_cabeza", "¿Tienes dolor de cabeza? (si/no): "),
+        ("dolor_muscular", "¿Te duelen los músculos? (si/no): "),
+        ("sarpullido", "¿Tienes sarpullido? (si/no): "),
+        ("dolor_pecho", "¿Sientes dolor en el pecho? (si/no): "),
+        ("sensibilidad_luz", "¿Te molesta la luz? (si/no): "),
+        ("nauseas", "¿Tienes náuseas? (si/no): ")
+    ]
+
+    for clave, pregunta in lista_sintomas:
+        respuesta = input(pregunta).strip().lower()
+        sintomas_usuario[clave] = (respuesta == "si")
+
+        motor.reset()
+        motor.evaluacion_final = False  # Evaluación intermedia
+        motor.declare(Sintomas(**sintomas_usuario))
+        motor.run()
+
+        if motor.diagnostico_realizado:
+            return  # Salimos si ya hubo diagnóstico
+
+    # Si llegamos aquí, no hubo diagnóstico, hacer evaluación final
     motor.reset()
-    print("Usando Fact desde:", Fact.__module__)
-
-    # Pedir sintomas al usuario
-    # creo que aqui es donde se deberia implemenar el arbol/red para que no haga todas las preguntas
-    sintomas_usuario = {
-        "fiebre": input("¿Tienes fiebre? (si/no): ").strip().lower() == "si",
-        "tos": input("¿Tienes tos? (si/no): ").strip().lower() == "si",
-        "dolor_garganta": input("¿Te duele la garganta? (si/no): ").strip().lower() == "si",
-        "congestion_nasal": input("¿Tienes congestión nasal? (si/no): ").strip().lower() == "si",
-        "dificultad_respirar": input("¿Tienes dificultad para respirar? (si/no): ").strip().lower() == "si",
-        "perdida_olfato": input("¿Perdiste el olfato? (si/no): ").strip().lower() == "si",
-        "dolor_cabeza": input("¿Tienes dolor de cabeza? (si/no): ").strip().lower() == "si",
-        "dolor_muscular": input("¿Te duelen los músculos? (si/no): ").strip().lower() == "si",
-        "sarpullido": input("¿Tienes sarpullido? (si/no): ").strip().lower() == "si",
-        "dolor_pecho": input("¿Sientes dolor en el pecho? (si/no): ").strip().lower() == "si",
-        "sensibilidad_luz": input("¿Te molesta la luz? (si/no): ").strip().lower() == "si",
-        "nauseas": input("¿Tienes náuseas? (si/no): ").strip().lower() == "si"
-    }
-
-    # Insertar hechos en el sistema
-    # print(f"\n🔎 Hechos insertados en el sistema: {sintomas_usuario}\n")
+    motor.evaluacion_final = True
     motor.declare(Sintomas(**sintomas_usuario))
-
-    # Ejecutar motor de reglas
     motor.run()
+
 
 # Ejecutar el sistema experto
 if __name__ == "__main__":
