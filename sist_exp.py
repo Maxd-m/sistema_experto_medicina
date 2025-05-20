@@ -237,20 +237,26 @@ class DiagnosticoMedico(KnowledgeEngine):
         respuesta = input(f"¿Tienes {sintoma.replace('_', ' ')}? (s/n): ").lower()
         self.sintomas_usuario[sintoma] = respuesta == "s"
 
-    def filtrar_diagnostico_tollens(self, immediate = False):
-        nuevos_posibles = set()
+    def diagnosticos_por_sintomas(sintomas_afirmados: set):
+        posibles = set()
 
-        if not immediate:
-            sintomas_reportados = self.sintomas_usuario
-        else:
-            sintomas_reportados = immediate
+        for diag, variantes in diagnosticos_definidos.items():
+            for variante in variantes:
+                if variante.issubset(sintomas_afirmados):
+                    posibles.add(diag)
+                    break
+
+        return posibles
+
+    def filtrar_diagnostico_tollens(self):
+        nuevos_posibles = set()
 
         for diag, variantes_sintomas in diagnosticos_definidos.items():
             base = diagnosticos_base[diag]
-            if any(s in sintomas_reportados and sintomas_reportados[s] is False for s in base):
+            if any(s in self.sintomas_usuario and self.sintomas_usuario[s] is False for s in base):
                 continue
 
-            sintomas_negados = {s for s, v in sintomas_reportados.items() if v is False}
+            sintomas_negados = {s for s, v in self.sintomas_usuario.items() if v is False}
 
             variante_valida = False
             for variante in variantes_sintomas:
@@ -276,10 +282,10 @@ class DiagnosticoMedico(KnowledgeEngine):
 
         for diag, variantes_sintomas in diagnosticos_definidos.items():
             base = diagnosticos_base[diag]
-            if any(s in sintomas_reportados and sintomas_reportados[s] is False for s in base):
+            if any(s in self.sintomas_usuario and self.sintomas_usuario[s] is False for s in base):
                 continue
 
-            sintomas_extra_afirmados = {s for s, v in sintomas_reportados.items() if v is True and s not in base}
+            sintomas_extra_afirmados = {s for s, v in self.sintomas_usuario.items() if v is True and s not in base}
 
             # 3. Verificar variantes válidas
             og_sintomas_extra_afirmados = sintomas_extra_afirmados
