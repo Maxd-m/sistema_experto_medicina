@@ -54,13 +54,11 @@
 #     engine.say(texto)
 #     engine.runAndWait()
 
-import firebase_admin
-from firebase_admin import credentials, db
+
 from experta import *
 from collections import Counter
 
-cred = credentials.Certificate("key.json")
-firebase_admin.initialize_app(cred)
+
 
 class Sintomas(Fact): pass
 
@@ -121,8 +119,8 @@ diagnosticos_definidos = {
 
     #Parasitos
     "amibiasis aguda avanzada": [ #tal vez cambie este por lo del dolor
-        diagnosticos_base["amibiasis aguda avanzada"] | {"dolor en la parte superior derecha del abdomen", "heces con sangre o moco"},
-        diagnosticos_base["amibiasis aguda avanzada"] | {"dolor en la parte superior derecha del abdomen"}
+        diagnosticos_base["amibiasis aguda avanzada"] | {"dolor en la parte superior derecha del abdomen"},
+        diagnosticos_base["amibiasis aguda avanzada"] | {"heces con sangre o moco"}
     ],
 
     "amibiasis aguda inicial": [
@@ -199,6 +197,14 @@ class DiagnosticoMedico(KnowledgeEngine):
         self.sintomas_usuario = {}
         self.diagnosticos_posibles = set(diagnosticos_definidos.keys())
         self.diagnostico_realizado = False
+        self.sintomas = set()
+
+    def set_sintomas(self):
+        todos = set()
+        for variantes in diagnosticos_definidos.values():
+            for sintoma in variantes:
+                todos.update(sintoma)
+        self.sintomas = todos
 
     def siguiente_sintoma_a_preguntar(self):
         sintomas_base_faltantes = set()
@@ -231,15 +237,49 @@ class DiagnosticoMedico(KnowledgeEngine):
         respuesta = input(f"¿Tienes {sintoma.replace('_', ' ')}? (s/n): ").lower()
         self.sintomas_usuario[sintoma] = respuesta == "s"
 
-    def filtrar_diagnosticos(self):
+    def filtrar_diagnostico_tollens(self, immediate = False):
         nuevos_posibles = set()
+
+        if not immediate:
+            sintomas_reportados = self.sintomas_usuario
+        else:
+            sintomas_reportados = immediate
 
         for diag, variantes_sintomas in diagnosticos_definidos.items():
             base = diagnosticos_base[diag]
-            if any(s in self.sintomas_usuario and self.sintomas_usuario[s] is False for s in base):
+            if any(s in sintomas_reportados and sintomas_reportados[s] is False for s in base):
                 continue
 
-            sintomas_extra_afirmados = {s for s, v in self.sintomas_usuario.items() if v is True and s not in base}
+            sintomas_negados = {s for s, v in sintomas_reportados.items() if v is False}
+
+            variante_valida = False
+            for variante in variantes_sintomas:
+                if variante.isdisjoint(sintomas_negados):
+                    variante_valida = True
+                    break
+
+            if not variante_valida:
+                continue
+
+            nuevos_posibles.add(diag)
+
+        print(nuevos_posibles)
+        self.diagnosticos_posibles = nuevos_posibles
+
+    def filtrar_diagnosticos_ponens(self, immediate = False):
+        nuevos_posibles = set()
+
+        if not immediate:
+            sintomas_reportados = self.sintomas_usuario
+        else:
+            sintomas_reportados = immediate
+
+        for diag, variantes_sintomas in diagnosticos_definidos.items():
+            base = diagnosticos_base[diag]
+            if any(s in sintomas_reportados and sintomas_reportados[s] is False for s in base):
+                continue
+
+            sintomas_extra_afirmados = {s for s, v in sintomas_reportados.items() if v is True and s not in base}
 
             # 3. Verificar variantes válidas
             og_sintomas_extra_afirmados = sintomas_extra_afirmados
@@ -258,7 +298,8 @@ class DiagnosticoMedico(KnowledgeEngine):
 
     @Rule(AS.fact << Sintomas())
     def evaluar_diagnostico(self, fact):
-        self.filtrar_diagnosticos()
+        #self.filtrar_diagnostico_ponens() #para hard filtering
+        self.filtrar_diagnostico_tollens() #como trabaja porlog
 
         if len(self.diagnosticos_posibles) == 0:
             print("No se encontró un diagnóstico claro.")
@@ -277,8 +318,6 @@ class DiagnosticoMedico(KnowledgeEngine):
                 if len(sintomas_extra) == 0 and not valid:
                     self.diagnosticos_posibles.remove(diag)
 
-            print(self.diagnosticos_posibles)
-
             if len(self.diagnosticos_posibles) == 0:
                 print("No se encontró un diagnóstico claro.")
             elif len(self.diagnosticos_posibles) == 1:
@@ -290,6 +329,8 @@ class DiagnosticoMedico(KnowledgeEngine):
 
 def ejecutar_diagnostico():
     motor = DiagnosticoMedico()
+    motor.set_sintomas()
+    print(motor.sintomas)
     while not motor.diagnostico_realizado:
         sintomas_a_preguntar = motor.siguiente_sintoma_a_preguntar()
 
@@ -300,9 +341,9 @@ def ejecutar_diagnostico():
         motor.preguntar_sintoma(siguiente)
 
         motor.reset()
-        print(motor.sintomas_usuario)
         motor.declare(Sintomas(**motor.sintomas_usuario))
         motor.run()
+
 
 if __name__ == "__main__":
     ejecutar_diagnostico()
