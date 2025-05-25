@@ -40,8 +40,7 @@ class MenuPrincipal:
 
         Opción dos: Iniciar diagnóstico médico con nuestro sistema experto.
 
-        Por favor, diga "opcion uno" para agendar cita, o "opcion 
-        " para diagnóstico.
+        Por favor, diga "opción uno" para agendar cita, o "opción dos" para diagnóstico.
         """
 
         self.voz.hablar(mensaje_menu)
@@ -145,7 +144,24 @@ class MenuPrincipal:
             motor.declare(Sintomas(**motor.sintomas_usuario))
             motor.run()
 
+        self.anunciar_resultado_diagnostico(motor)
+
         self.voz.hablar("Diagnóstico completado. Gracias por usar nuestro sistema.")
+
+    def anunciar_resultado_diagnostico(self, motor):
+        if len(motor.diagnosticos_posibles) == 0:
+            mensaje = "No se encontró un diagnóstico claro..."
+
+        elif len(motor.diagnosticos_posibles) == 1:
+            diagnostico = list(motor.diagnosticos_posibles)[0]
+            mensaje = f"El diagnóstico más probable es: {diagnostico}..."
+
+        else:
+            diagnosticos = ', '.join(motor.diagnosticos_posibles)
+            mensaje = f"Los posibles diagnósticos son: {diagnosticos}..."
+
+        # Leerlo
+        self.voz.hablar(mensaje)
 
     def manejar_opcion_invalida(self):
         self.voz.hablar("""

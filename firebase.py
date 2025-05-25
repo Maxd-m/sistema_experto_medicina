@@ -92,13 +92,13 @@ if __name__ == "__main__":
     Para leer lo de firebase si lo ocupan
     """
     # print(diagnosticodb.leer('pacientes'))
-    # print(diagnosticodb.leer_base())
-    # print(diagnosticodb.leer_definidos())
+    #print(diagnosticodb.leer_base())
+    #print(diagnosticodb.leer_definidos())
 
     """
     SOLO PONGAN LOS NUEVOS BASE QUITEN LO DEMAS, OJO PRIMERO PONGAN LOS BASE LUEGO LOS OTROS
     """
-    # diagnosticos_base = {
+    #diagnosticos_base = {
     #     "amebiasis aguda avanzada": {
     #         "dolor abdominal", "diarrea", "heces anormales"
     #     },
@@ -125,14 +125,32 @@ if __name__ == "__main__":
     #     },
     #     "giardiasis": {
     #         "dolor abdominal", "diarrea", "heces anormales"
-    #     }
-    # }
-    #diagnosticodb.dev_base(diagnosticos_base)
+    #     },
+
+    #      # virus
+    #      "varicela": {
+    #          "erupción cutánea con picazón", "fiebre", "cansancio"
+    #      },
+    #
+    #      "influenza": {
+    #          "fiebre o escalofríos", "dolores musculares", "fatiga", "tos"
+    #      },
+    #
+    #      "sarampion": {
+    #          "fiebre", "tos", "secreción nasal", "ojos rojos", "erupción cutánea"
+    #      },
+    #
+    #      "norovirus": {
+    #          "diarrea", "vómitos", "náuseas", "dolor de estómago"
+    #      }
+    #
+    #  }
+    # diagnosticodb.dev_base(diagnosticos_base)
 
     """
     Pongan {} si con el base era suficiente
     """
-    # diagnosticos_definidos = {
+    #diagnosticos_definidos = {
     #     # Generales (alergia, algo aparte de micro)
     #
     #     # Virus
@@ -257,5 +275,59 @@ if __name__ == "__main__":
     #         {"dolor en la parte superior central del abdomen",
     #                                            "diarrea pastosa, con muchos gases y maloliente"}
     #     ]
+
+    #     # Virus
+    #     "varicela": [
+    #         {"pérdida de apetito", "dolor de cabeza"},
+    #         {"ampollas llenas de líquido", "formación de costras"},
+    #         {"erupción en el pecho, espalda y cara"},
+    #         {"ampollas en la boca"},
+    #         {"ampollas en los párpados"},
+    #         {"ampollas en el área genital"},
+    #         {"protuberancias, ampollas y costras simultáneamente"},
+    #         {"malestar general", "dolor de cabeza"}
+    #     ],
+    #
+    #     "influenza": [
+    #         {"fiebre alta", "dolores musculares intensos"},
+    #         {"fiebre alta", "sudoración excesiva"},
+    #         {"tos seca", "dolor de garganta"},
+    #         {"tos persistente", "secreción o congestión nasal"},
+    #         {"fatiga extrema", "dolor de cabeza intenso"},
+    #         {"dolores musculares intensos", "dolor en articulaciones"},
+    #         {"dolor de garganta severo", "dificultad para tragar"},
+    #         {"congestión nasal severa", "presión en los senos nasales"},
+    #         {"dolor de cabeza pulsátil", "sensibilidad a la luz"},
+    #         {"fatiga debilitante", "malestar general"}
+    #     ],
+    #
+    #     "sarampion": [
+    #         {"fiebre alta (más de 40°C)", "tos seca"},
+    #         {"fiebre alta", "manchas de Koplik en la boca"},
+    #         {"erupción cutánea en la cara", "fiebre alta"},
+    #         {"erupción extendida desde la cara hacia el cuerpo", "fiebre alta"},
+    #         {"ojos llorosos e inflamados", "dolor de garganta"},
+    #         {"tos persistente", "malestar general"},
+    #         {"erupción con pequeños bultos rojos", "fiebre superior a 40°C"},
+    #         {"erupción con manchas que se fusionan", "congestión nasal severa"},
+    #         {"manchas blancas con centro azulado en el interior de la boca",
+    #                                           "secreción nasal abundante"},
+    #         {"erupción que se extiende desde la cabeza hacia todo el cuerpo",
+    #                                           "descamación de la piel"}
+    #     ],
+    #
+    #     "norovirus": [
+    #         {"diarrea líquida o blanda", "aparición repentina de síntomas"},
+    #         {"vómitos frecuentes", "fiebre leve"},
+    #         {"dolor o calambres estomacales intensos", "dolor de cabeza"},
+    #         {"náuseas intensas", "dolores musculares"},
+    #         {"diarrea acuosa", "disminución de la micción"},
+    #         {"vómitos repetidos", "boca y garganta seca"},
+    #         {"dolor abdominal agudo", "sensación de malestar general"},
+    #         {"diarrea persistente", "mareos al ponerse de pie"},
+    #         {"vómitos que duran de 1 a 3 días", "somnolencia inusual"},
+    #         {"náuseas matutinas", "febrícula"}
+    #     ]
+    #
     # }
     # diagnosticodb.dev_definidos(diagnosticos_definidos)
