@@ -155,10 +155,17 @@ class MenuPrincipal:
         elif len(motor.diagnosticos_posibles) == 1:
             diagnostico = list(motor.diagnosticos_posibles)[0]
             mensaje = f"El diagnóstico más probable es: {diagnostico}..."
-
+            if info_adicional := self.db.leer(f'informacion/{diagnostico}'):
+                mensaje += info_adicional
         else:
-            diagnosticos = ', '.join(motor.diagnosticos_posibles)
-            mensaje = f"Los posibles diagnósticos son: {diagnosticos}..."
+            #diagnosticos = ', '.join(motor.diagnosticos_posibles)
+            mensaje = 'Se encontró más de un posible diagnóstico.'
+            for diagnostico in list(motor.diagnosticos_posibles):
+                mensaje += f"Un diagnóstico es: {diagnostico}..."
+                if info_adicional := self.db.leer(f'informacion/{diagnostico}'):
+                    mensaje += info_adicional
+                mensaje += "..."
+            #mensaje = f"Los posibles diagnósticos son: {diagnosticos}..."
 
         # Leerlo
         self.voz.hablar(mensaje)
