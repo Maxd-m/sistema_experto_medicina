@@ -2,6 +2,7 @@ import sys
 import os
 from modules.voz_manager import VozManager
 from modules.whatsapp_manager import WhatsAppManager
+from firebase import DiagnosticoDB
 from modules.sistema_experto import ejecutar_diagnostico
 
 
@@ -10,6 +11,10 @@ class MenuPrincipal:
         self.voz = VozManager()
         self.whatsapp = WhatsAppManager()
         self.ejecutando = True
+        self.db = DiagnosticoDB("key.json")
+        self.diagnosticos_base = None
+        self.diagnosticos_definidos = None
+        self.posibles_diagnosticos = None
 
     def mostrar_bienvenida(self):
         """Es el mensaje de bienvenida"""
@@ -71,6 +76,7 @@ class MenuPrincipal:
                 En breve recibirá la confirmación en su WhatsApp con todos los detalles.
                 Gracias por elegir nuestros servicios.
                 """)
+                self.db.guardar('pacientes', numero)
             else:
                 self.voz.hablar("""
                 Lo siento, hubo un problema al agendar su cita. 
@@ -110,7 +116,7 @@ class MenuPrincipal:
         # Importar aquí para evitar problemas de dependencias circulares
         from modules.sistema_experto import DiagnosticoMedico, Sintomas
 
-        motor = DiagnosticoMedico()
+        motor = DiagnosticoMedico(self.diagnosticos_base, self.diagnosticos_definidos)
         motor.set_sintomas()
 
         # Integrar VozManager con el sistema experto
@@ -155,6 +161,11 @@ class MenuPrincipal:
 
     def ejecutar(self):
         try:
+            # Initialization
+            self.db.guardar('pacientes', '442223034')
+            self.diagnosticos_base = self.db.leer_base()
+            self.diagnosticos_definidos = self.db.leer_definidos()
+
             self.mostrar_bienvenida()
 
             while self.ejecutando:
