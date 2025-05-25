@@ -312,7 +312,7 @@ if __name__ == "__main__":
     #         {"erupción con manchas que se fusionan", "congestión nasal severa"},
     #         {"manchas blancas con centro azulado en el interior de la boca",
     #                                           "secreción nasal abundante"},
-    #         {"erupción que se extiende desde la cabeza hacia todo el cuerpo",
+    #         {"erupción que se extiende desde la cabeza haciatodo el cuerpo",
     #                                           "descamación de la piel"}
     #     ],
     #
