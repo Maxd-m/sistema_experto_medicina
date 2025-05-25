@@ -1,101 +1,35 @@
-# import os
-# import sys
-# import speech_recognition as sr
-# import pyttsx3
-# from experta import Fact, KnowledgeEngine, Rule, Field, AS
-# # Asegura que se cargue la versión local de experta
-# ruta_local = os.path.abspath("libs/experta")
-# if ruta_local not in sys.path:
-#     sys.path.insert(0, ruta_local)
-#
-#
-#
-# # Motor de voz
-# voz = pyttsx3.init()
-#
-#
-# def preguntar_por_voz(pregunta):
-#     hablar(pregunta)  # Lee la pregunta en voz alta
-#
-#     r = sr.Recognizer()
-#
-#     with sr.Microphone() as source:
-#         print("🎤 Esperando respuesta (di 'sí' o 'no')...")
-#         audio = r.listen(source)
-#
-#     try:
-#         respuesta = r.recognize_google(audio, language="es-ES")
-#         print(f"🔈 Tú dijiste: {respuesta}")
-#
-#         if "sí" in respuesta.lower():
-#             return True
-#         elif "no" in respuesta.lower():
-#             return False
-#         else:
-#             print("❗ Respuesta no clara. Intenta responder solo 'sí' o 'no'.")
-#             return preguntar_por_voz(pregunta)
-#     except sr.UnknownValueError:
-#         print("❗ No se entendió. Vamos a intentarlo otra vez.")
-#         return preguntar_por_voz(pregunta)
-#     except sr.RequestError as e:
-#         print(f"❗ Error del servicio de reconocimiento de voz: {e}")
-#         return False
-#
-# def hablar(texto):
-#     print(texto)
-#     engine = pyttsx3.init()
-#     engine.setProperty('rate', 150)
-#
-#     for voz in engine.getProperty('voices'):
-#         if "spanish" in voz.name.lower():
-#             engine.setProperty('voice', voz.id)
-#             break
-#
-#     engine.say(texto)
-#     engine.runAndWait()
-
-
 from experta import *
 from collections import Counter
 
-
-
 class Sintomas(Fact): pass
 
-traducciones = {
-    "anemia" : {
-        "fatiga extrema", "palidez notable", "dificultad para respirar"
-    }
-}
-
 diagnosticos_base = {
-    "amibiasis aguda avanzada" : {
-        "necesidad de defecar sin conseguirlo", "diarrea"
+    "amebiasis aguda avanzada" : {
+        "dolor abdominal", "diarrea", "heces anormales"
     },
-    "amibiasis aguda inicial" : {
-        "dolor de cabeza", "perdida de apetito", "nauseas", "vomitos"
+    "amebiasis aguda inicial" : {
+        "dolor de cabeza", "pérdida de apetito", "nauseas", "vómitos"
     },
-    "amibiasis cronica" : {
-        "episodios de estrenimiento", "episodios de diarrea explosiva",
-        "episodios de dolor en la parte superior del abdomen"
+    "amebiasis crónica" : {
+        "estreñimiento", "diarrea", "dolor abdominal"
     },
-    "absceso hepatico amibiano" : {
-        "fiebre alta", "dolor en la parte superior derecha del abdomen", "malestar general"
+    "absceso hepático amebiano" : {
+        "fiebre", "dolor abdominal", "malestar general"
     },
-    "absceso amibiano pulmonar" : {
-        "dificultad para respirar", "dolor en el pecho", "tos" , "dolor en el pecho que empeora al respirar o toser"
-    },
-    "ascariasis pulmonar" : {
+    "absceso amebiano pulmonar" : {
         "dificultad para respirar", "dolor en el pecho", "tos"
     },
-    "ascariasis intestinal" : {
-        "malestar abdominal cronico"
+    "ascariasis pulmonar" : {
+        "dificultad para respirar", "dolor en el pecho", "tos", "fiebre"
     },
-    "ascariasis pancreatica" : {
-        "dolor intenso en la parte superior del abdomen", "nauseas", "vomitos"
+    "ascariasis intestinal" : {
+        "dolor abdominal", "vómitos", "nauseas"
+    },
+    "ascariasis pancreática" : {
+        "dolor abdominal", "nauseas", "vómitos"
     },
     "giardiasis" : {
-        "dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente"
+        "dolor abdominal", "diarrea", "heces anormales"
     }
 }
 
@@ -118,76 +52,76 @@ diagnosticos_definidos = {
     #Bacterias
 
     #Parasitos
-    "amibiasis aguda avanzada": [ #tal vez cambie este por lo del dolor
-        diagnosticos_base["amibiasis aguda avanzada"] | {"dolor en la parte superior derecha del abdomen"},
-        diagnosticos_base["amibiasis aguda avanzada"] | {"heces con sangre o moco"}
+    "amebiasis aguda avanzada": [
+        diagnosticos_base["amebiasis aguda avanzada"] | {"dolor en la parte superior derecha del abdomen"},
+        diagnosticos_base["amebiasis aguda avanzada"] | {"heces con sangre o moco"},
+	    diagnosticos_base["amebiasis aguda avanzada"] | {"necesidad de defecar sin conseguirlo"},
     ],
 
-    "amibiasis aguda inicial": [
-        diagnosticos_base["amibiasis aguda inicial"] | {"fiebre"},
-        diagnosticos_base["amibiasis aguda inicial"]
+    "amebiasis aguda inicial": [
+        diagnosticos_base["amebiasis aguda inicial"] | {"fiebre"},
+        diagnosticos_base["amebiasis aguda inicial"]
     ],
 
-    "amibiasis cronica": [
-        diagnosticos_base["amibiasis cronica"] | traducciones["anemia"],
-        diagnosticos_base["amibiasis cronica"] | {"dolor de cabeza"},
-        diagnosticos_base["amibiasis cronica"] | {"mal sabor de boca"},
-        diagnosticos_base["amibiasis cronica"] | {"dolor despues de comer"},
-        diagnosticos_base["amibiasis cronica"]
+    "amebiasis crónica": [
+        diagnosticos_base["amebiasis crónica"] | {"diarrea explosiva", "dolor en la parte superior del abdomen", "fatiga extrema", "palidez notable"},
+        diagnosticos_base["amebiasis crónica"] | {"diarrea explosiva", "dolor en la parte superior del abdomen", "dolor de cabeza"},
+        diagnosticos_base["amebiasis crónica"] | {"diarrea explosiva", "dolor en la parte superior del abdomen", "mal sabor de boca"},
+        diagnosticos_base["amebiasis crónica"] | {"diarrea explosiva", "dolor en la parte superior del abdomen", "dolor abdominal después de comer"},
+        diagnosticos_base["amebiasis crónica"] | {"diarrea explosiva", "dolor en la parte superior del abdomen"}
     ],
 
-    "absceso hepatico amibiano": [
-        diagnosticos_base["absceso hepatico amibiano"] | {"sudoraciones vespertinas"},
-        diagnosticos_base["absceso hepatico amibiano"] | {"dolor de cabeza"},
-        diagnosticos_base["absceso hepatico amibiano"] | {"dolor en el hombro izquierdo"},
-        diagnosticos_base["absceso hepatico amibiano"] | traducciones["anemia"],
-        diagnosticos_base["absceso hepatico amibiano"] | {"perdida de peso"},
-        diagnosticos_base["absceso hepatico amibiano"] | {"coloramiento amarillo"},
-        diagnosticos_base["absceso hepatico amibiano"] | {"alcoholismo"},
-        diagnosticos_base["absceso hepatico amibiano"] | {"desnutricion"},
-        diagnosticos_base["absceso hepatico amibiano"] | {"inmunodeficiencia"},
-        diagnosticos_base["absceso hepatico amibiano"]
+    "absceso hepático amebiano": [
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "sudoraciones vespertinas"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "dolor de cabeza"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "dolor en el hombro izquierdo"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "fatiga extrema", "palidez notable"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "pérdida de peso"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "coloramiento amarillo"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "alcoholismo"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "desnutrición"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen", "inmunodeficiencia"},
+        diagnosticos_base["absceso hepático amebiano"] | {"fiebre alta", "dolor en la parte superior derecha del abdomen"}
     ],
 
-    "absceso amibiano pulmonar": [
-        diagnosticos_base["absceso amibiano pulmonar"] | {"tos seca"},
-        diagnosticos_base["absceso amibiano pulmonar"] | {"tos con flema"},
-        diagnosticos_base["absceso amibiano pulmonar"] | {"tos con flema achocolatada y sabor a higado"},
-        diagnosticos_base["absceso amibiano pulmonar"] | {"fiebre"},
-        diagnosticos_base["absceso amibiano pulmonar"] | {"malestar general"},
-        diagnosticos_base["absceso amibiano pulmonar"] | {"sudoraciones nocturnas"}
+    "absceso amebiano pulmonar": [
+        diagnosticos_base["absceso amebiano pulmonar"] | {"dolor en el pecho que empeora al respirar o toser", "tos seca"},
+        diagnosticos_base["absceso amebiano pulmonar"] | {"dolor en el pecho que empeora al respirar o toser", "tos con flema"},
+        diagnosticos_base["absceso amebiano pulmonar"] | {"dolor en el pecho que empeora al respirar o toser", "tos achocolatada y sabor a hígado"},
+        diagnosticos_base["absceso amebiano pulmonar"] | {"dolor en el pecho que empeora al respirar o toser", "fiebre"},
+        diagnosticos_base["absceso amebiano pulmonar"] | {"dolor en el pecho que empeora al respirar o toser", "malestar general"},
+        diagnosticos_base["absceso amebiano pulmonar"] | {"dolor en el pecho que empeora al respirar o toser", "sudoraciones nocturnas"}
     ],
 
     "ascariasis pulmonar" : [
-        diagnosticos_base["ascariasis pulmonar"] | {"tos con sangre", "fiebre", "ruidos al respirar"},
-        diagnosticos_base["ascariasis pulmonar"] | {"tos con sangre", "fiebre"},
+        diagnosticos_base["ascariasis pulmonar"] | {"tos con sangre", "ruidos al respirar"},
+        diagnosticos_base["ascariasis pulmonar"] | {"tos con sangre"},
     ],
 
     "ascariasis intestinal" : [
-        diagnosticos_base["ascariasis intestinal"] | {"dolor abdominal", "falta de apetito", "nauseas", "diarrea"},
-        diagnosticos_base["ascariasis intestinal"] | {"intolerancia a la lactosa que no existia antes"},
-        diagnosticos_base["ascariasis intestinal"] | {"desnutricion"},
-        diagnosticos_base["ascariasis intestinal"] | {"dolor abdominal", "vomitos", "estrenimiento"}, #si obstruyen
-        diagnosticos_base["ascariasis intestinal"] | {"dolor abdominal", "vomitos con parasitos", "estrenimiento"}, #si obstruyen
+        diagnosticos_base["ascariasis intestinal"] | {"dolor abdominal crónico", "falta de apetito", "diarrea"},
+        diagnosticos_base["ascariasis intestinal"] | {"intolerancia a la lactosa que no existía antes"},
+        diagnosticos_base["ascariasis intestinal"] | {"desnutrición"},
+        diagnosticos_base["ascariasis intestinal"] | {"dolor abdominal crónico", "vómitos con parásitos", "estreñimiento"}, #si obstruyen
     ],
 
-    "ascariasis pancreatica" : [
-         diagnosticos_base["ascariasis pancreatica"] | {"coloramiento amarillo"},
-         diagnosticos_base["ascariasis pancreatica"] | {"sensibilidad al tacto en el abdomen"},
-         diagnosticos_base["ascariasis pancreatica"] | {"dolor abdominal que irradia a la espalda"},
-         diagnosticos_base["ascariasis pancreatica"] | {"dolor abdominal que irradia al hombro derecho"},
-         diagnosticos_base["ascariasis pancreatica"] | {"hinchazon de pies o tobillos"},
-         diagnosticos_base["ascariasis pancreatica"] | {"heces color arcilla"},
+    "ascariasis pancreática" : [
+         diagnosticos_base["ascariasis pancreática"] | {"dolor intenso en la parte superior del abdomen", "coloramiento amarillo"},
+         diagnosticos_base["ascariasis pancreática"] | {"dolor intenso en la parte superior del abdomen", "sensibilidad al tacto en el abdomen"},
+         diagnosticos_base["ascariasis pancreática"] | {"dolor intenso en la parte superior del abdomen", "dolor abdominal que irradia a la espalda"},
+         diagnosticos_base["ascariasis pancreática"] | {"dolor intenso en la parte superior del abdomen", "dolor abdominal que irradia al hombro derecho"},
+         diagnosticos_base["ascariasis pancreática"] | {"dolor intenso en la parte superior del abdomen", "hinchazón de pies o tobillos"},
+         diagnosticos_base["ascariasis pancreática"] | {"dolor intenso en la parte superior del abdomen", "heces color arcilla"},
     ],
 
     "giardiasis" : [
-        diagnosticos_base["giardiasis"] | {"malestar general"},
-        diagnosticos_base["giardiasis"] | {"nauseas"},
-        diagnosticos_base["giardiasis"] | {"heces con alimentos sin digerir"},
-        diagnosticos_base["giardiasis"] | {"heces con mucha grasa, dificiles de limpiar"},
-        diagnosticos_base["giardiasis"] | {"dolor en articulaciones"},
-        diagnosticos_base["giardiasis"] | {"sarpullido"},
-        diagnosticos_base["giardiasis"]
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente", "malestar general"},
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente", "nauseas"},
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente", "heces con alimentos sin digerir"},
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente", "heces con mucha grasa, difíciles de limpiar"},
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente", "dolor en articulaciones"},
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente", "sarpullido"},
+        diagnosticos_base["giardiasis"] | {"dolor en la parte superior central del abdomen", "diarrea pastosa, con muchos gases y maloliente"}
     ]
 }
 
