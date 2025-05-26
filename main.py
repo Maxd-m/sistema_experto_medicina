@@ -4,6 +4,7 @@ from tkinter import Tk, Frame, Label, Button, IntVar, Checkbutton, Canvas, Scrol
     ttk, messagebox
 from PIL import ImageTk, Image, ImageSequence
 from PIL.Image import Resampling
+from fontTools.unicodedata import block
 
 from firebase import DiagnosticoDB
 from modules.voz_manager import VozManager
@@ -377,9 +378,9 @@ class MenuPrincipal:
                 self.bg_image3 = ImageTk.PhotoImage(imagen)
                 fondo_label.configure(image=self.bg_image3)
             else:
-                fondo_label.after(100, ajustar_fondo)
+                fondo_label.after(30, ajustar_fondo)
 
-        fondo_label.after(100, ajustar_fondo)
+        fondo_label.after(30, ajustar_fondo)
 
         def on_frame_configure(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
@@ -465,6 +466,7 @@ class MenuPrincipal:
     def cambiar_frame_sintomas_definidos(self):
         for widget in self.ventana_doctor.winfo_children():
             widget.destroy()
+
         # TÍTULO
         label_tit = Label(
             self.ventana_doctor,
@@ -476,16 +478,18 @@ class MenuPrincipal:
         )
         label_tit.pack()
 
-        # CONTENEDOR HORIZONTAL PRINCIPAL
-        contenedor = Frame(self.ventana_doctor)
+        # CONTENEDOR PRINCIPAL
+        contenedor = Frame(self.ventana_doctor, bg='black')
         contenedor.pack(fill='both', expand=True)
 
-        # ========== FRAME SÍNTOMAS ========== (IZQUIERDO)
-        frame_izquierdo = Frame(contenedor)
+        # ========== FRAME IZQUIERDO (SÍNTOMAS) ========== #
+        frame_izquierdo = Frame(contenedor, bg='black')
         frame_izquierdo.pack(side='left', fill='both', expand=True)
-        canvas = Canvas(frame_izquierdo, bg="white")
 
-        # Estilo de Scrollbar igual al otro mtd
+        canvas = Canvas(frame_izquierdo, bg="black", highlightthickness=0)
+        canvas.pack(side=LEFT, fill=BOTH, expand=True)
+
+        # Scrollbar personalizada
         style = ttk.Style()
         style.theme_use('clam')
         style.configure("Vertical.TScrollbar",
@@ -493,33 +497,40 @@ class MenuPrincipal:
                         background="black",
                         darkcolor="#00313d",
                         lightcolor="#00313d",
-                        troughcolor="#black",
-                        bordercolor="#black",
+                        troughcolor="#000000",
+                        bordercolor="#000000",
                         arrowcolor="black")
 
         scrollbar = ttk.Scrollbar(frame_izquierdo, orient=VERTICAL, command=canvas.yview, style="Vertical.TScrollbar")
+        scrollbar.pack(side=RIGHT, fill=Y)
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        canvas.pack(side=LEFT, fill=BOTH, expand=True)
-        scrollbar.pack(side=RIGHT, fill=Y)
+        # Frame desplazable
+        frame_sintomas_def = Frame(canvas, bg='black')
+        ventana_interna = canvas.create_window((0, 0), window=frame_sintomas_def, anchor='nw')
 
-        # Fondo canvas
-        imagen = Image.open("fondo2.png").resize(
-            (self.ventana_doctor.winfo_screenwidth(), self.ventana_doctor.winfo_screenheight()),
-            Resampling.LANCZOS
-        )
-        self.bg_izquierda = ImageTk.PhotoImage(imagen)
-        fondo_label = Label(canvas, image=self.bg_izquierda)
-        fondo_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        # Fondo dentro del frame desplazable
+        fondo_label = Label(frame_sintomas_def, bg="black")
+        fondo_label.place(x=0, y=0, relwidth=1, relheight=1)
         fondo_label.lower()
 
-        # Frame interno con los síntomas definidos
-        frame_sintomas_def = Frame(canvas, bg='white')
-        fondo_label_def = Label(frame_sintomas_def, image=self.bg_izquierda)
-        fondo_label_def.place(relx=0, rely=0, relwidth=1, relheight=1)
-        fondo_label_def.lower()
+        def ajustar_fondo():
+            frame_sintomas_def.update_idletasks()
+            ancho = frame_izquierdo.winfo_width()
+            alto_canvas = frame_izquierdo.winfo_height()
+            alto_real = frame_sintomas_def.winfo_height()
 
-        ventana_interna = canvas.create_window((0, 0), window=frame_sintomas_def, anchor='nw')
+            if alto_real < alto_canvas:
+                frame_sintomas_def.config(height=alto_canvas)
+
+            if ancho > 1 and alto_real > 1:
+                imagen = Image.open("fondo2.png").resize((ancho, max(alto_real, alto_canvas)), Resampling.LANCZOS)
+                self.bg_image3 = ImageTk.PhotoImage(imagen)
+                fondo_label.configure(image=self.bg_image3)
+            else:
+                fondo_label.after(30, ajustar_fondo)
+
+        fondo_label.after(30, ajustar_fondo)
 
         def on_frame_configure(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
@@ -532,7 +543,7 @@ class MenuPrincipal:
 
         # ====== SÍNTOMAS DEFINIDOS (Checkbuttons) ======
         self.vars_sintomas_def = []
-        for sintoma in self.diagnostico.get_sintomas_variante():
+        for sintoma in self.diagnostico.get_sintomas_variante_faltantes():
             var = IntVar()
             chk = Checkbutton(
                 frame_sintomas_def,
@@ -578,10 +589,9 @@ class MenuPrincipal:
             fg='white',
             command=self.transicion_a_resultado
         )
-
         boton_saltar.grid(row=0, column=2, padx=10)
 
-        # ========== FRAME DERECHO: Imagen ==========
+        # ========== FRAME DERECHO (Robot) ========== #
         frame_derecho = Frame(contenedor, width=self.ventana_doctor.winfo_screenwidth() / 2.5)
         frame_derecho.pack(side='left', fill='both')
 
@@ -590,11 +600,10 @@ class MenuPrincipal:
             Resampling.LANCZOS
         )
         self.bg_derecha = ImageTk.PhotoImage(imagen_robot)
-
         fondo_der = Label(frame_derecho, image=self.bg_derecha)
         fondo_der.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        # ========== Scroll con el mouse ==========
+        # Scroll con mouse
         if self.ventana_doctor.tk.call('tk', 'windowingsystem') == 'x11':
             canvas.bind_all("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
             canvas.bind_all("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
@@ -628,13 +637,13 @@ class MenuPrincipal:
             resultado_texto = "No se encontró un diagnóstico específico."
 
         imagen_fondo = Image.open(fondo_path).resize(
-            (int(self.ventana_doctor.winfo_screenwidth() * 0.5), self.ventana_doctor.winfo_screenheight()),
+            (int(self.ventana_doctor.winfo_screenwidth() * 0.6), self.ventana_doctor.winfo_screenheight()),
             Resampling.LANCZOS
         )
         self.bg_izq_diag = ImageTk.PhotoImage(imagen_fondo)
 
         imagen_robot = Image.open(robot_path).resize(
-            (int(self.ventana_doctor.winfo_screenwidth() * 0.5), self.ventana_doctor.winfo_screenheight()),
+            (int(self.ventana_doctor.winfo_screenwidth() * 0.4), self.ventana_doctor.winfo_screenheight()),
             Resampling.LANCZOS
         )
         self.bg_der_diag = ImageTk.PhotoImage(imagen_robot)
@@ -665,11 +674,11 @@ class MenuPrincipal:
 
         # === BOTONES ===
         Button(frame_resultado, text="Volver a diagnosticar", font=("Arial", 14),
-               command=self.transicion_carga_a_diagnostico, bg="#03535d").pack(pady=20)
-        Button(frame_resultado, text="Salir", bg='#951717', font=("Arial", 14), command=self.ventana_doctor.destroy).pack()
+               command=self.transicion_carga_a_diagnostico, fg='white',bg="#03535d").pack(pady=20)
+        Button(frame_resultado, text="Salir", bg='#951717', fg='white',font=("Arial", 14), command=self.ventana_doctor.destroy).pack()
 
         # === FRAME DERECHO (Imagen robot) ===
-        frame_der = Frame(contenedor, width=int(self.ventana_doctor.winfo_screenwidth() * 0.3))
+        frame_der = Frame(contenedor, width=int(self.ventana_doctor.winfo_screenwidth() * 0.4))
         frame_der.pack(side='left', fill='both')
 
         fondo_der = Label(frame_der, image=self.bg_der_diag)
@@ -683,7 +692,7 @@ class MenuPrincipal:
         self.diagnostico.run()
         self.diagnostico.filtrar_diagnosticos_ponens()
         # Si ya no hay síntomas definidos por mostrar, ir directo a mostrar_diagnostico
-        if not self.diagnostico.get_sintomas_variante():
+        if not self.diagnostico.get_sintomas_variante_faltantes():
             self.transicion_carga(40, callback=self.mostrar_diagnostico)
         else:
             self.transicion_carga(60, callback=self.cambiar_frame_sintomas_definidos)

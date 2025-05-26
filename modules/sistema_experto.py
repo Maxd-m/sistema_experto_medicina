@@ -147,12 +147,22 @@ class DiagnosticoMedico(KnowledgeEngine):
     def get_sintomas_base(self):
         return {s for sintomas in self.diagnosticos_base.values() for s in sintomas}
 
-    def get_sintomas_variante(self):
+    def get_sintomas_variante_faltantes(self):
         sintomas_variante = set()
-        for variantes in self.diagnosticos_definidos.values():
+
+        for diag in self.diagnosticos_posibles:
+            base = self.diagnosticos_base.get(diag, set())
+            variantes = self.diagnosticos_definidos.get(diag, [])
+
             for variante in variantes:
-                sintomas_variante.update(variante)
-        return sintomas_variante - self.get_sintomas_base()
+                solo_variante = variante - base
+                for sintoma in solo_variante:
+                    if sintoma not in self.sintomas_usuario:
+                        sintomas_variante.add(sintoma)
+
+        return sintomas_variante
+
+
 def ejecutar_diagnostico():
     from firebase import DiagnosticoDB
     db = DiagnosticoDB("../key.json")
