@@ -126,6 +126,31 @@ diagnosticos_definidos = {
 }
 
 class DiagnosticoMedico(KnowledgeEngine):
+    def get_sintomas_base(self):
+        sintomas = set()
+        for conjunto in diagnosticos_base.values():
+            sintomas.update(conjunto)
+        return sintomas
+
+    def sintomas_variante_faltantes_dado_base(self):
+        sintomas_base_afirmados = {s for s, v in self.sintomas_usuario.items() if v}
+        sintomas_preguntados = set(self.sintomas_usuario.keys())
+        sintomas_faltantes = set()
+
+        for diag in self.diagnosticos_posibles:
+            variantes = diagnosticos_definidos.get(diag, [])
+            base = diagnosticos_base.get(diag, set())
+
+            if not base.issubset(sintomas_base_afirmados):
+                continue  # solo seguimos si la base ya está afirmada
+
+            for variante in variantes:
+                print(variante)
+                sintomas_variante = variante - base
+                sintomas_no_preguntados = sintomas_variante - sintomas_preguntados
+                sintomas_faltantes.update(sintomas_no_preguntados)
+        return sintomas_faltantes
+
     def __init__(self):
         super().__init__()
         self.sintomas_usuario = {}
@@ -171,16 +196,17 @@ class DiagnosticoMedico(KnowledgeEngine):
         respuesta = input(f"¿Tienes {sintoma.replace('_', ' ')}? (s/n): ").lower()
         self.sintomas_usuario[sintoma] = respuesta == "s"
 
-    def diagnosticos_por_sintomas(sintomas_afirmados: set):
-        posibles = set()
+    def diagnosticos_por_sintomas(self):
+        sintomas_afirmados = {s for s, v in self.sintomas_usuario.items() if v}
 
-        for diag, variantes in diagnosticos_definidos.items():
+        resultados = set()
+        for diagnostico, variantes in self.base_conocimiento.items():
             for variante in variantes:
                 if variante.issubset(sintomas_afirmados):
-                    posibles.add(diag)
-                    break
+                    resultados.add(diagnostico)
+                    break  # Si una variante coincide, no necesitas revisar más
 
-        return posibles
+        return resultados
 
     def filtrar_diagnostico_tollens(self):
         nuevos_posibles = set()
@@ -236,36 +262,30 @@ class DiagnosticoMedico(KnowledgeEngine):
         print(nuevos_posibles)
         self.diagnosticos_posibles = nuevos_posibles
 
-    @Rule(AS.fact << Sintomas())
-    def evaluar_diagnostico(self, fact):
-        #self.filtrar_diagnostico_ponens() #para hard filtering
-        self.filtrar_diagnostico_tollens() #como trabaja porlog
+    @Rule(Sintomas())
+    def evaluar_diagnostico(self):
+        if not self.siguiente_sintoma_a_preguntar():
+            sintomas_afirmados = {s for s, v in self.sintomas_usuario.items() if v}
+            validos = set()
 
-        if len(self.diagnosticos_posibles) == 0:
-            print("No se encontró un diagnóstico claro.")
-            self.diagnostico_realizado = True
-        elif not self.siguiente_sintoma_a_preguntar():
-            valid = False
-            aux = {i for i in self.diagnosticos_posibles}
-            for diag in aux:
-                sintomas_extra = {s for s, v in self.sintomas_usuario.items() if v is True and s not in diagnosticos_base[diag]}
-                if len(sintomas_extra) == 0:
-                    for variante in diagnosticos_definidos[diag]:
-                        variante_valida = {s for s in variante if s not in diagnosticos_base[diag]}
-                        if len(variante_valida) == 0:
-                            valid = True
-                            break
-                if len(sintomas_extra) == 0 and not valid:
-                    self.diagnosticos_posibles.remove(diag)
+            for diag in self.diagnosticos_posibles:
+                for variante in diagnosticos_definidos[diag]:
+                    if variante.issubset(sintomas_afirmados):
+                        validos.add(diag)
+                        break
 
-            if len(self.diagnosticos_posibles) == 0:
+            if not validos:
                 print("No se encontró un diagnóstico claro.")
-            elif len(self.diagnosticos_posibles) == 1:
-                diag = list(self.diagnosticos_posibles)[0]
-                print(f"Diagnóstico probable: {diag.upper()}")
+            elif len(validos) == 1:
+                print(f"Diagnóstico probable: {list(validos)[0].upper()}")
             else:
-                print(f"Posibles diagnósticos: {', '.join(self.diagnosticos_posibles)}")
+                print("Posibles diagnósticos:")
+                for diag in validos:
+                    print(f"- {diag}")
+
+            self.diagnosticos_posibles = list(validos)
             self.diagnostico_realizado = True
+
 
 def ejecutar_diagnostico():
     motor = DiagnosticoMedico()
