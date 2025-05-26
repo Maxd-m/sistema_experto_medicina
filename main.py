@@ -602,13 +602,13 @@ class MenuPrincipal:
             resultado_texto = "No se encontró un diagnóstico específico."
 
         imagen_fondo = Image.open(fondo_path).resize(
-            (int(self.ventana_doctor.winfo_screenwidth() * 0.7), self.ventana_doctor.winfo_screenheight()),
+            (int(self.ventana_doctor.winfo_screenwidth() * 0.5), self.ventana_doctor.winfo_screenheight()),
             Resampling.LANCZOS
         )
         self.bg_izq_diag = ImageTk.PhotoImage(imagen_fondo)
 
         imagen_robot = Image.open(robot_path).resize(
-            (int(self.ventana_doctor.winfo_screenwidth() * 0.3), self.ventana_doctor.winfo_screenheight()),
+            (int(self.ventana_doctor.winfo_screenwidth() * 0.5), self.ventana_doctor.winfo_screenheight()),
             Resampling.LANCZOS
         )
         self.bg_der_diag = ImageTk.PhotoImage(imagen_robot)
@@ -618,13 +618,12 @@ class MenuPrincipal:
         contenedor.pack(fill='both', expand=True)
 
         # === FRAME IZQUIERDO (Texto diagnóstico) ===
-        frame_izq = Frame(contenedor, bg='white')
+        frame_izq = Frame(contenedor, bg='black')
         frame_izq.pack(side='left', fill='both', expand=True)
 
-        fondo_izq = Label(frame_izq, image=self.bg_izq_diag)
-        fondo_izq.place(relx=0, rely=0, relwidth=1, relheight=1)
-
         frame_resultado = Frame(frame_izq, bg='white')
+        fondo_izq = Label(frame_resultado, image=self.bg_izq_diag)
+        fondo_izq.place(relx=0, rely=0, relwidth=1, relheight=1)
         frame_resultado.pack(fill='both', expand=True, padx=40, pady=40)
 
         if len(self.diagnostico.diagnosticos_posibles) <= 1:
@@ -640,8 +639,8 @@ class MenuPrincipal:
 
         # === BOTONES ===
         Button(frame_resultado, text="Volver a diagnosticar", font=("Arial", 14),
-               command=self.transicion_carga_a_diagnostico).pack(pady=20)
-        Button(frame_resultado, text="Salir", font=("Arial", 14), command=self.ventana_doctor.destroy).pack()
+               command=self.transicion_carga_a_diagnostico, bg="#03535d").pack(pady=20)
+        Button(frame_resultado, text="Salir", bg='#951717', font=("Arial", 14), command=self.ventana_doctor.destroy).pack()
 
         # === FRAME DERECHO (Imagen robot) ===
         frame_der = Frame(contenedor, width=int(self.ventana_doctor.winfo_screenwidth() * 0.3))
