@@ -5,16 +5,20 @@ from tkinter import Tk, Frame, Label, Button, IntVar, Checkbutton, Canvas, Scrol
 from PIL import ImageTk, Image, ImageSequence
 from PIL.Image import Resampling
 
+from firebase import DiagnosticoDB
 from modules.voz_manager import VozManager
 from modules.whatsapp_manager import WhatsAppManager
 from modules.sistema_experto import ejecutar_diagnostico, DiagnosticoMedico, Sintomas
-
 
 class MenuPrincipal:
     def __init__(self):
         self.voz = VozManager()
         self.whatsapp = WhatsAppManager()
         self.ejecutando = True
+        self.db = DiagnosticoDB()
+        self.diagnosticos_base = None
+        self.diagnosticos_definidos = None
+        self.posibles_diagnosticos = None
 
     def mostrar_bienvenida(self):
         """Es el mensaje de bienvenida"""
@@ -40,8 +44,7 @@ class MenuPrincipal:
 
         Opción dos: Iniciar diagnóstico médico con nuestro sistema experto.
 
-        Por favor, diga "opcion uno" para agendar cita, o "opcion 
-        " para diagnóstico.
+        Por favor, diga "opción uno" para agendar cita, o "opción dos" para diagnóstico.
         """
 
         self.voz.hablar(mensaje_menu)
@@ -76,6 +79,7 @@ class MenuPrincipal:
                 En breve recibirá la confirmación en su WhatsApp con todos los detalles.
                 Gracias por elegir nuestros servicios.
                 """)
+                self.db.guardar('pacientes', numero)
             else:
                 self.voz.hablar("""
                 Lo siento, hubo un problema al agendar su cita. 
@@ -115,7 +119,7 @@ class MenuPrincipal:
         # Importar aquí para evitar problemas de dependencias circulares
         from modules.sistema_experto import DiagnosticoMedico, Sintomas
 
-        motor = DiagnosticoMedico()
+        motor = DiagnosticoMedico(self.diagnosticos_base, self.diagnosticos_definidos)
         motor.set_sintomas()
 
         # Integrar VozManager con el sistema experto
@@ -144,7 +148,31 @@ class MenuPrincipal:
             motor.declare(Sintomas(**motor.sintomas_usuario))
             motor.run()
 
+        self.anunciar_resultado_diagnostico(motor)
+
         self.voz.hablar("Diagnóstico completado. Gracias por usar nuestro sistema.")
+
+    def anunciar_resultado_diagnostico(self, motor):
+        if len(motor.diagnosticos_posibles) == 0:
+            mensaje = "No se encontró un diagnóstico claro..."
+
+        elif len(motor.diagnosticos_posibles) == 1:
+            diagnostico = list(motor.diagnosticos_posibles)[0]
+            mensaje = f"El diagnóstico más probable es: {diagnostico}..."
+            if info_adicional := self.db.leer(f'informacion/{diagnostico}'):
+                mensaje += info_adicional
+        else:
+            #diagnosticos = ', '.join(motor.diagnosticos_posibles)
+            mensaje = 'Se encontró más de un posible diagnóstico.'
+            for diagnostico in list(motor.diagnosticos_posibles):
+                mensaje += f"Un diagnóstico es: {diagnostico}..."
+                if info_adicional := self.db.leer(f'informacion/{diagnostico}'):
+                    mensaje += info_adicional
+                mensaje += "..."
+            #mensaje = f"Los posibles diagnósticos son: {diagnosticos}..."
+
+        # Leerlo
+        self.voz.hablar(mensaje)
 
     def manejar_opcion_invalida(self):
         self.voz.hablar("""
@@ -160,6 +188,11 @@ class MenuPrincipal:
 
     def ejecutar(self):
         try:
+            # Initialization
+            self.db.guardar('pacientes', '442223034')
+            self.diagnosticos_base = self.db.leer_base()
+            self.diagnosticos_definidos = self.db.leer_definidos()
+
             self.mostrar_bienvenida()
 
             while self.ejecutando:
@@ -197,6 +230,7 @@ class MenuPrincipal:
         finally:
             print("\n👋 Gracias por usar el Sistema de Diagnóstico Médico")
             print("🏥 Clínica San Rafael - Sistema desarrollado para fines educativos")
+
 
 #interfaz
     def precargar_frames_gif(self):
