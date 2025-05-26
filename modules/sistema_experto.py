@@ -144,7 +144,15 @@ class DiagnosticoMedico(KnowledgeEngine):
             else:
                 print(f"Posibles diagnósticos: {', '.join(self.diagnosticos_posibles)}")
             self.diagnostico_realizado = True
+    def get_sintomas_base(self):
+        return {s for sintomas in self.diagnosticos_base.values() for s in sintomas}
 
+    def get_sintomas_variante(self):
+        sintomas_variante = set()
+        for variantes in self.diagnosticos_definidos.values():
+            for variante in variantes:
+                sintomas_variante.update(variante)
+        return sintomas_variante - self.get_sintomas_base()
 def ejecutar_diagnostico():
     from firebase import DiagnosticoDB
     db = DiagnosticoDB("../key.json")
